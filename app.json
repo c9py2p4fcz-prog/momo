@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "momo",
+    "slug": "momo",
+    "owner": "spinokio2",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "momo",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.momo.finance",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Приложението се нуждае от достъп до камерата за заснемане и сканиране на касови бележки.",
+        "NSPhotoLibraryUsageDescription": "Приложението използва вашите снимки за зареждане на касови бележки в локалния архив.",
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложението използва вашите снимки за зареждане на касови бележки в локалния архив.",
+          "cameraPermission": "Приложението се нуждае от достъп до камерата за заснемане и сканиране на касови бележки."
+        }
+      ],
+      "expo-sqlite",
+      "expo-sharing"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ea1ac942-d637-4e42-9225-26d6b9376d95"
+      }
+    }
+  }
+}
