@@ -130,7 +130,14 @@ export function ReceiptCropperModal({
             <Text style={styles.cancelText}>Отказ</Text>
           </Pressable>
           <Text style={styles.headerTitle}>Изрязване на бележката</Text>
-          <View style={{ width: 60 }} />
+          <Pressable
+            onPress={() => onCropComplete(imageUri, '')}
+            style={styles.headerBtn}
+            hitSlop={10}>
+            <Text style={[styles.cancelText, { color: '#0A84FF', fontWeight: '700' }]}>
+              Цялата
+            </Text>
+          </Pressable>
         </View>
 
         <Text style={styles.instructionText}>

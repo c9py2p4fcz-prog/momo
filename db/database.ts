@@ -177,8 +177,18 @@ function setWebItem<T>(key: string, value: T): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
+  } catch (e: any) {
     console.error(`[Storage] Write error for ${key}:`, e);
+    // If quota exceeded and this is receipts, try saving with recent receipts
+    if (key === WEB_KEYS.RECEIPTS && Array.isArray(value)) {
+      try {
+        const trimmed = (value as any[]).slice(0, 15);
+        window.localStorage.setItem(key, JSON.stringify(trimmed));
+        console.log('[Storage] Saved trimmed receipts to avoid quota error');
+      } catch (innerErr) {
+        console.error('[Storage] Even trimmed receipts failed:', innerErr);
+      }
+    }
   }
 }
 

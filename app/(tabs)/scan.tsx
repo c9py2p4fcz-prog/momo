@@ -178,14 +178,17 @@ export default function ScanScreen() {
   // Save to local archive and database
   const handleSaveToArchive = async () => {
     if (!imageUri) {
-      Alert.alert('Грешка', 'Моля заснемете или изберете касова бележка.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Моля заснемете или изберете касова бележка.');
+      } else {
+        Alert.alert('Грешка', 'Моля заснемете или изберете касова бележка.');
+      }
       return;
     }
 
-    const parsedAmount = parseFloat(totalAmount.replace(',', '.'));
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert('Грешка', 'Моля въведете валидна сума за бележката.');
-      return;
+    let parsedAmount = parseFloat(totalAmount.replace(',', '.'));
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
+      parsedAmount = 0;
     }
 
     const receiptId = `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -194,10 +197,10 @@ export default function ScanScreen() {
     try {
       setIsProcessing(true);
 
-      // 1. Save image file locally into the app document directory
+      // 1. Save image file locally into the app document directory / web storage
       const { localUri, filename } = await saveReceiptImage(imageUri);
 
-      // 2. Add receipt to SQLite archive
+      // 2. Add receipt to SQLite / Web archive
       await addNewReceipt({
         id: receiptId,
         image_uri: localUri,
@@ -207,47 +210,60 @@ export default function ScanScreen() {
         currency,
         receipt_date: receiptDate,
         raw_ocr_text: rawText,
-        transaction_id: txId,
+        transaction_id: parsedAmount > 0 ? txId : undefined,
       });
 
-      // 3. Create expense transaction linked to this receipt
-      await addNewTransaction({
-        id: txId,
-        account_id: selectedAccountId || accounts[0]?.id || 'acc_bank_1',
-        category_id: selectedCategoryId || 'cat_supermarket',
-        type: 'expense',
-        amount: parsedAmount,
-        currency,
-        title: storeName.trim() || 'Покупка с касова бележка',
-        date: receiptDate,
-        notes: notes.trim() || undefined,
-        receipt_id: receiptId,
-      });
+      // 3. Create expense transaction linked to this receipt if amount > 0
+      if (parsedAmount > 0) {
+        await addNewTransaction({
+          id: txId,
+          account_id: selectedAccountId || accounts[0]?.id || 'acc_bank_1',
+          category_id: selectedCategoryId || 'cat_supermarket',
+          type: 'expense',
+          amount: parsedAmount,
+          currency,
+          title: storeName.trim() || 'Покупка с касова бележка',
+          date: receiptDate,
+          notes: notes.trim() || undefined,
+          receipt_id: receiptId,
+        });
+      }
 
       setIsProcessing(false);
 
-      Alert.alert(
-        'Успешно запазено!',
-        'Касовата бележка е архивирана локално на телефона, а разходът е записан в бюджета.',
-        [
-          {
-            text: 'Към архива',
-            onPress: () => {
-              handleReset();
-              router.push('/(tabs)/archive');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Касовата бележка беше запазена успешно в архива!');
+        handleReset();
+        router.push('/(tabs)/archive');
+      } else {
+        Alert.alert(
+          'Успешно запазено!',
+          'Касовата бележка е архивирана локално на телефона, а разходът е записан в бюджета.',
+          [
+            {
+              text: 'Към архива',
+              onPress: () => {
+                handleReset();
+                router.push('/(tabs)/archive');
+              },
             },
-          },
-          {
-            text: 'Сканирай нова',
-            onPress: handleReset,
-            style: 'cancel',
-          },
-        ]
-      );
-    } catch (error) {
+            {
+              text: 'Сканирай нова',
+              onPress: handleReset,
+              style: 'cancel',
+            },
+          ]
+        );
+      }
+    } catch (error: any) {
       setIsProcessing(false);
       console.error('Save error:', error);
-      Alert.alert('Грешка', 'Възникна проблем при локалното запазване на бележката.');
+      const msg = error?.message || 'Възникна проблем при запазването на бележката.';
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`Грешка: ${msg}`);
+      } else {
+        Alert.alert('Грешка', msg);
+      }
     }
   };
 
@@ -387,6 +403,9 @@ export default function ScanScreen() {
                       />
                       <Text style={[styles.currencyText, { color: theme.tint }]}>{currency}</Text>
                     </View>
+                    <Text style={{ fontSize: 12, color: theme.textTertiary, marginTop: 4 }}>
+                      * Въведете сумата или оставете 0.00, ако е само за архивиране
+                    </Text>
                   </View>
 
                   {/* Date */}

@@ -22,12 +22,60 @@ export async function ensureReceiptsDirectory(): Promise<void> {
 }
 
 /**
+ * Compresses an image into a lightweight data URL for web storage (avoids blob expiration and quota errors)
+ */
+export async function compressImageForWeb(uri: string, maxWidth = 800, quality = 0.6): Promise<string> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return uri;
+  return new Promise((resolve) => {
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      let width = img.naturalWidth || img.width || 800;
+      let height = img.naturalHeight || img.height || 1000;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(uri);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      try {
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      } catch (err) {
+        console.warn('Canvas toDataURL failed:', err);
+        resolve(uri);
+      }
+    };
+    img.onerror = (e) => {
+      console.warn('Image load error during compression:', e);
+      resolve(uri);
+    };
+    img.src = uri;
+  });
+}
+
+/**
  * Copies a newly taken or selected photo into the app's permanent local receipts folder
  */
 export async function saveReceiptImage(sourceUri: string): Promise<{ localUri: string; filename: string }> {
   if (Platform.OS === 'web' || !FileSystem.documentDirectory) {
+    let persistentUri = sourceUri;
+    try {
+      if (typeof window !== 'undefined') {
+        persistentUri = await compressImageForWeb(sourceUri, 800, 0.6);
+      }
+    } catch (e) {
+      console.warn('Could not compress image for web storage:', e);
+    }
     return {
-      localUri: sourceUri,
+      localUri: persistentUri,
       filename: `receipt_${Date.now()}.jpg`,
     };
   }
