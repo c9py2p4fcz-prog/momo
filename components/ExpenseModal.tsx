@@ -50,6 +50,8 @@ export function ExpenseModal({
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     if (visible) {
       setType(initialType);
@@ -57,6 +59,7 @@ export function ExpenseModal({
       setTitle(initialTitle || '');
       setDate(initialDate || new Date().toISOString().split('T')[0]);
       setNotes('');
+      setErrorMessage('');
 
       if (accounts.length > 0 && !selectedAccountId) {
         setSelectedAccountId(accounts[0].id);
@@ -74,33 +77,30 @@ export function ExpenseModal({
   const filteredCategories = categories.filter((c) => c.type === type);
 
   const handleSave = async () => {
-    const parsedAmount = parseFloat(amount.replace(',', '.'));
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert('Грешка', 'Моля въведете валидна сума');
+    setErrorMessage('');
+    const cleanAmount = amount.trim().replace(',', '.');
+    const parsedAmount = parseFloat(cleanAmount);
+    if (!cleanAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      setErrorMessage('Моля въведете валидна сума в лева (напр. 25.50)');
       return;
     }
 
-    if (!title.trim()) {
-      Alert.alert('Грешка', 'Моля въведете заглавие или описание');
-      return;
-    }
+    const fallbackCat = filteredCategories[0]?.id || (type === 'expense' ? 'cat_supermarket' : 'cat_salary');
+    const targetCatId = selectedCategoryId || fallbackCat;
+    const catObj = categories.find((c) => c.id === targetCatId);
 
-    if (!selectedAccountId) {
-      Alert.alert('Грешка', 'Моля изберете сметка');
-      return;
-    }
-
-    const fallbackCat = filteredCategories[0]?.id || 'cat_other_exp';
+    const finalTitle = title.trim() || catObj?.name || (type === 'expense' ? 'Разход' : 'Приход');
+    const targetAccountId = selectedAccountId || accounts[0]?.id || 'acc_bank_1';
 
     try {
       await addNewTransaction({
         id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        account_id: selectedAccountId,
-        category_id: selectedCategoryId || fallbackCat,
+        account_id: targetAccountId,
+        category_id: targetCatId,
         type,
         amount: parsedAmount,
         currency: 'BGN',
-        title: title.trim(),
+        title: finalTitle,
         date,
         notes: notes.trim() || undefined,
         receipt_id: initialReceiptId,
@@ -109,7 +109,7 @@ export function ExpenseModal({
       onClose();
     } catch (error) {
       console.error('Failed to create transaction:', error);
-      Alert.alert('Грешка', 'Възникна проблем при записването на транзакцията');
+      setErrorMessage('Възникна проблем при записването на транзакцията');
     }
   };
 
@@ -358,6 +358,14 @@ export function ExpenseModal({
               />
             </View>
 
+            {/* Error Message */}
+            {!!errorMessage && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={18} color={theme.danger} />
+                <Text style={[styles.errorText, { color: theme.danger }]}>{errorMessage}</Text>
+              </View>
+            )}
+
             {/* Submit Button */}
             <Pressable
               style={({ pressed }) => [
@@ -509,6 +517,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FF3B3015',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  errorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
   },
   saveButton: {
     flexDirection: 'row',
