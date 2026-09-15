@@ -34,6 +34,13 @@ interface FinanceContextType {
   updateSubscriptionAmount: (id: string, amount: number, isPaid?: number) => Promise<void>;
   deleteUtilitySubscriptionById: (id: string) => Promise<void>;
   syncAllSubscriptions: () => Promise<void>;
+  
+  // Bulk clear & reset actions
+  clearAllTransactions: () => Promise<void>;
+  clearAllBills: () => Promise<void>;
+  clearAllReceipts: () => Promise<void>;
+  resetAccountBalances: (balance?: number) => Promise<void>;
+  resetEverything: (mode: 'zero' | 'demo') => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -207,6 +214,31 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     await refreshData();
   };
 
+  const clearAllTransactions = async () => {
+    await db.clearAllTransactions();
+    await refreshData();
+  };
+
+  const clearAllBills = async () => {
+    await db.clearAllBills();
+    await refreshData();
+  };
+
+  const clearAllReceipts = async () => {
+    await db.clearAllReceipts();
+    await refreshData();
+  };
+
+  const resetAccountBalances = async (balance: number = 0) => {
+    await db.resetAccountBalances(balance);
+    await refreshData();
+  };
+
+  const resetEverything = async (mode: 'zero' | 'demo') => {
+    await db.resetEverything(mode);
+    await refreshData();
+  };
+
   return (
     <FinanceContext.Provider
       value={{
@@ -235,6 +267,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         updateSubscriptionAmount,
         deleteUtilitySubscriptionById,
         syncAllSubscriptions,
+        clearAllTransactions,
+        clearAllBills,
+        clearAllReceipts,
+        resetAccountBalances,
+        resetEverything,
       }}>
       {children}
     </FinanceContext.Provider>

@@ -17,6 +17,7 @@ import { useFinance } from '@/db/FinanceContext';
 import { BalanceOverviewCard } from '@/components/StatCard';
 import { TransactionItem } from '@/components/TransactionItem';
 import { ExpenseModal } from '@/components/ExpenseModal';
+import { DataManagementModal } from '@/components/DataManagementModal';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
@@ -47,6 +48,7 @@ export default function HomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [dataModalVisible, setDataModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'expense' | 'income'>('expense');
 
   const onRefresh = async () => {
@@ -85,11 +87,25 @@ export default function HomeScreen() {
             <Text style={[styles.greetingText, { color: theme.text }]}>Лични финанси</Text>
           </View>
 
-          <Pressable
-            style={[styles.scannerShortcut, { backgroundColor: theme.cardBackground }]}
-            onPress={() => router.push('/(tabs)/scan')}>
-            <Ionicons name="scan-outline" size={22} color={theme.tint} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.headerBtn,
+                { backgroundColor: theme.cardBackground, opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => setDataModalVisible(true)}>
+              <Ionicons name="settings-outline" size={20} color={theme.text} />
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.headerBtn,
+                { backgroundColor: theme.cardBackground, opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => router.push('/(tabs)/scan')}>
+              <Ionicons name="scan-outline" size={20} color={theme.tint} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Main Balance Overview */}
@@ -180,6 +196,12 @@ export default function HomeScreen() {
         onClose={() => setModalVisible(false)}
         initialType={modalType}
       />
+
+      {/* Data Management & Reset Modal */}
+      <DataManagementModal
+        visible={dataModalVisible}
+        onClose={() => setDataModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -202,18 +224,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  dateText: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  greetingText: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  scannerShortcut: {
+  headerBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -224,6 +240,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 2,
+  },
+  dateText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  greetingText: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginTop: 2,
   },
   billsAlertCard: {
     flexDirection: 'row',

@@ -940,3 +940,109 @@ export async function deleteUtilitySubscription(id: string): Promise<void> {
   await db.runAsync('DELETE FROM bills WHERE id = ?', `bill_auto_${id}`);
   await db.runAsync('DELETE FROM utility_subscriptions WHERE id = ?', id);
 }
+
+// ----------------- BULK CLEAR & RESET OPERATIONS -----------------
+
+export async function clearAllTransactions(): Promise<void> {
+  if (isWeb) {
+    setWebItem(WEB_KEYS.TRANSACTIONS, []);
+    const receipts = getWebItem<Receipt[]>(WEB_KEYS.RECEIPTS, []);
+    for (const r of receipts) {
+      r.transaction_id = undefined;
+    }
+    setWebItem(WEB_KEYS.RECEIPTS, receipts);
+    return;
+  }
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('UPDATE receipts SET transaction_id = NULL;');
+    await db.runAsync('DELETE FROM transactions;');
+  });
+}
+
+export async function clearAllBills(): Promise<void> {
+  if (isWeb) {
+    setWebItem(WEB_KEYS.BILLS, []);
+    return;
+  }
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM bills;');
+}
+
+export async function clearAllReceipts(): Promise<void> {
+  if (isWeb) {
+    setWebItem(WEB_KEYS.RECEIPTS, []);
+    const txs = getWebItem<Transaction[]>(WEB_KEYS.TRANSACTIONS, []);
+    for (const t of txs) {
+      t.receipt_id = undefined;
+    }
+    setWebItem(WEB_KEYS.TRANSACTIONS, txs);
+    return;
+  }
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('UPDATE transactions SET receipt_id = NULL;');
+    await db.runAsync('DELETE FROM receipts;');
+  });
+}
+
+export async function resetAccountBalances(balance: number = 0): Promise<void> {
+  if (isWeb) {
+    const accounts = getWebItem<Account[]>(WEB_KEYS.ACCOUNTS, DEFAULT_ACCOUNTS);
+    for (const a of accounts) {
+      a.balance = balance;
+    }
+    setWebItem(WEB_KEYS.ACCOUNTS, accounts);
+    return;
+  }
+  const db = await getDatabase();
+  await db.runAsync('UPDATE accounts SET balance = ?;', balance);
+}
+
+export async function resetEverything(mode: 'zero' | 'demo'): Promise<void> {
+  if (isWeb) {
+    if (mode === 'zero') {
+      setWebItem(WEB_KEYS.TRANSACTIONS, []);
+      setWebItem(WEB_KEYS.BILLS, []);
+      setWebItem(WEB_KEYS.RECEIPTS, []);
+      setWebItem(WEB_KEYS.SUBSCRIPTIONS, []);
+      const zeroAccounts = DEFAULT_ACCOUNTS.map((a) => ({
+        ...a,
+        balance: 0,
+        created_at: new Date().toISOString(),
+      }));
+      setWebItem(WEB_KEYS.ACCOUNTS, zeroAccounts);
+      setWebItem(WEB_KEYS.CATEGORIES, DEFAULT_CATEGORIES);
+    } else {
+      setWebItem(WEB_KEYS.TRANSACTIONS, DEFAULT_TRANSACTIONS);
+      setWebItem(WEB_KEYS.BILLS, DEFAULT_BILLS);
+      setWebItem(WEB_KEYS.RECEIPTS, []);
+      setWebItem(WEB_KEYS.SUBSCRIPTIONS, []);
+      setWebItem(WEB_KEYS.ACCOUNTS, DEFAULT_ACCOUNTS);
+      setWebItem(WEB_KEYS.CATEGORIES, DEFAULT_CATEGORIES);
+    }
+    return;
+  }
+
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('DELETE FROM transactions;');
+    await db.runAsync('DELETE FROM bills;');
+    await db.runAsync('DELETE FROM receipts;');
+    await db.runAsync('DELETE FROM utility_subscriptions;');
+
+    if (mode === 'zero') {
+      await db.runAsync('UPDATE accounts SET balance = 0;');
+    } else {
+      await db.runAsync('DELETE FROM accounts;');
+      const now = new Date().toISOString();
+      await db.runAsync(
+        `INSERT INTO accounts (id, name, type, balance, currency, icon, color, created_at) VALUES 
+        ('acc_bank_1', 'Банкова сметка', 'bank', 2450.00, 'BGN', 'card-outline', '#007AFF', ?),
+        ('acc_cash_1', 'В брой (Портфейл)', 'cash', 180.00, 'BGN', 'cash-outline', '#34C759', ?),
+        ('acc_savings_1', 'Спестовна сметка', 'savings', 5000.00, 'BGN', 'shield-checkmark-outline', '#FF9500', ?)`,
+        now, now, now
+      );
+    }
+  });
+}
