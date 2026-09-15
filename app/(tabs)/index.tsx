@@ -29,7 +29,7 @@ export default function HomeScreen() {
     (Platform.OS === 'web' &&
       typeof navigator !== 'undefined' &&
       /iPad|iPhone|iPod/.test(navigator.userAgent));
-  const topInset = Math.max(insets.top, isIOS ? 54 : (Platform.OS === 'web' ? 24 : 0));
+  const topInset = Math.max(insets.top, Platform.OS === 'web' ? 56 : (Platform.OS === 'ios' ? 54 : 0));
 
   const {
     loading,

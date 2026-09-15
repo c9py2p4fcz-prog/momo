@@ -20,6 +20,7 @@ export default function Root({ children }: { children: ReactNode }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Momo" />
         <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="theme-color" content="#F8F9FA" />
         <meta name="format-detection" content="telephone=no" />
         <title>Momo - Лични финанси</title>
 
@@ -33,6 +34,16 @@ export default function Root({ children }: { children: ReactNode }) {
 }
 
 const responsiveBackground = `
+@font-face {
+  font-family: 'ionicons';
+  src: url('/assets/fonts/Ionicons.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Ionicons';
+  src: url('/assets/fonts/Ionicons.ttf') format('truetype');
+  font-display: swap;
+}
 html, body {
   background-color: #F8F9FA;
   margin: 0;

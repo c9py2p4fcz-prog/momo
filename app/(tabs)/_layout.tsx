@@ -17,11 +17,11 @@ export default function TabLayout() {
       typeof navigator !== 'undefined' &&
       /iPad|iPhone|iPod/.test(navigator.userAgent));
 
-  // 54px provides safe clearance for iPhone Dynamic Island and notches
-  const topInset = Math.max(insets.top, isIOS ? 54 : (Platform.OS === 'web' ? 24 : 0));
-  // 34px provides safe clearance for iPhone Home indicator bar
-  const bottomInset = Math.max(insets.bottom, isIOS ? 34 : (Platform.OS === 'web' ? 24 : 16));
-  const tabHeight = 56 + bottomInset;
+  // 56px provides safe clearance for iPhone Dynamic Island and notches
+  const topInset = Math.max(insets.top, Platform.OS === 'web' ? 56 : (Platform.OS === 'ios' ? 54 : 0));
+  // 36px provides safe clearance for iPhone Home indicator bar and Safari toolbar
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'web' ? 36 : (Platform.OS === 'ios' ? 34 : 16));
+  const tabHeight = 58 + bottomInset;
 
   return (
     <Tabs
