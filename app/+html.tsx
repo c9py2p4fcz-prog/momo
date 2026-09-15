@@ -17,10 +17,10 @@ export default function Root({ children }: { children: ReactNode }) {
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Momo" />
         <meta name="apple-touch-fullscreen" content="yes" />
-        <meta name="theme-color" content="#F8F9FA" />
+        <meta name="theme-color" content="#000000" />
         <meta name="format-detection" content="telephone=no" />
         <title>Momo - Лични финанси</title>
 
@@ -45,7 +45,8 @@ const responsiveBackground = `
   font-display: swap;
 }
 html, body {
-  background-color: #F8F9FA;
+  background-color: #000000;
+  color: #FFFFFF;
   margin: 0;
   padding: 0;
   width: 100%;
